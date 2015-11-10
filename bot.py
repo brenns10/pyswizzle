@@ -21,6 +21,7 @@ class PySwizzle(object):
         self.commands = {}
         self.stream = None
         self.lyrics = None
+        self.lyrics_lower = None
 
     def initialize_twitter(self, access_token=secrets.ACCESS_TOKEN,
                            access_token_secret=secrets.ACCESS_TOKEN_SECRET,
@@ -38,9 +39,10 @@ class PySwizzle(object):
         # open up a file and get a list of lines of lyrics (no blank lines)
         with open(filename) as lyrics_file:
             self.lyrics = [l.strip() for l in lyrics_file if l != "\n"]
+            self.lyrics_lower = [l.lower() for l in self.lyrics]
 
     def diagnostic_send_tweet(self, msg, **kwargs):
-        log.critical('SEND: "%s"' % msg)
+        log.info('SEND: "%s"' % msg)
 
     def send_tweet(self, msg, reply_to=None):
         if reply_to is None:
@@ -48,10 +50,22 @@ class PySwizzle(object):
         else:
             self.t.statuses.update(status=msg, in_reply_to_status_id=reply_to)
 
+    def similarity(self, pieces, line):
+        return sum(piece in line for piece in pieces)
+
+    def choose_lyric(self, text):
+        pieces = set(text.lower().split())
+        scores = [self.similarity(pieces, line) for line in self.lyrics_lower]
+        max_score = max(scores)
+        log.info('MAX SCORE: %d' % max_score)
+        lines = [self.lyrics[i] for i, score in enumerate(scores)
+                 if score == max_score]
+        return random.choice(lines)
+
     def handle_tweet(self, tweet):
         if tweet['user']['screen_name'] != self.username:
             # Pick a lyric, compose a reply, and send it!
-            line = random.choice(self.lyrics)
+            line = self.choose_lyric(tweet['text'])
             reply = '@' + tweet['user']['screen_name'] + ' ' + line
             self.send_tweet(reply, reply_to=tweet['id'])
 
@@ -94,7 +108,7 @@ def main():
                         help='use a script of tweets instead of going live')
     parser.add_argument('--log-file', type=FileType('w'), default=sys.stdout,
                         help='file to log to (stdout by default)')
-    parser.add_argument('--level', type=str, default='CRITICAL',
+    parser.add_argument('--level', type=str, default='INFO',
                         help='log level for output')
 
     args = parser.parse_args()
