@@ -63,11 +63,20 @@ class PySwizzle(object):
         return random.choice(lines)
 
     def handle_tweet(self, tweet):
-        if tweet['user']['screen_name'] != self.username:
-            # Pick a lyric, compose a reply, and send it!
-            line = self.choose_lyric(tweet['text'])
-            reply = '@' + tweet['user']['screen_name'] + ' ' + line
-            self.send_tweet(reply, reply_to=tweet['id'])
+        if tweet['user']['screen_name'] == self.username:
+            return
+
+        mentions = tweet['entities']['user_mentions']
+        mentions.append(tweet['user'])
+        usernames = set(m['screen_name'] for m in mentions)
+        if self.username not in usernames:
+            log.info('NOT IN THAT TWEET')
+            return
+
+        usernames = ['@' + u for u in usernames if u != self.username]
+        line = self.choose_lyric(tweet['text'])
+        reply = ' '.join(usernames) + ' ' + line
+        self.send_tweet(reply, reply_to=tweet['id'])
 
     def run(self):
         # The user may want to substitute a mock stream or different lyrics.
