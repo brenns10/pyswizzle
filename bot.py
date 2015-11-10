@@ -76,6 +76,9 @@ class PySwizzle(object):
         usernames = ['@' + u for u in usernames if u != self.username]
         line = self.choose_lyric(tweet['text'])
         reply = ' '.join(usernames) + ' ' + line
+        if len(reply) > 140:
+            log.warning('ALMOST SENT TOO LONG REPLY "%s"' % reply)
+            reply = reply[:140]
         self.send_tweet(reply, reply_to=tweet['id'])
 
     def run(self):
