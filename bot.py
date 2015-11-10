@@ -46,9 +46,10 @@ class PySwizzle(object):
 
     def send_tweet(self, msg, reply_to=None):
         if reply_to is None:
-            self.t.statuses.update(status=msg)
+            self.twitter.statuses.update(status=msg)
         else:
-            self.t.statuses.update(status=msg, in_reply_to_status_id=reply_to)
+            self.twitter.statuses.update(status=msg,
+                                         in_reply_to_status_id=reply_to)
 
     def similarity(self, pieces, line):
         return sum(piece in line for piece in pieces)
