@@ -56,8 +56,8 @@ class TwitterInterface(BotInterface):
         """
         Opens an interface to the Twitter API and opens a stream.
         """
-        t = Twitter(auth=auth)
-        ts = TwitterStream(domain='userstream.twitter.com', auth=auth)
+        t = Twitter(auth=self.auth)
+        ts = TwitterStream(domain='userstream.twitter.com', auth=self.auth)
 
         self.twitter = t
         self.stream = ts.user()
